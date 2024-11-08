@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animación unicornio</title>
+</head>
+<body>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body, html {
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #animateButton {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .unicorn {
+            position: absolute;
+            max-width: 18%;
+            height: auto;
+            display: none;
+            z-index: 2;
+        }
+
+        .sparkle-trail {
+            position: absolute;
+            opacity: 0.9;
+            animation: sparkle 1.5s linear forwards;
+            pointer-events: none;
+            font-size: 20px; /* Tamaño base */
+            color: #FFD700; /* Color dorado de ejemplo */
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.8), 0 0 16px rgba(255, 215, 0, 0.6); /* Brillo */
+        }
+
+        @keyframes sparkle {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+
+        .btn {
+            background-color: #fa8072;
+            color: white;
+            padding: 1em 2em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.25rem;
+            font-weight: 700;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #f97263;
+        }
+
+        @media (max-width: 767px) {
+            .unicorn {
+                max-width: 70%;
+            }
+        }
+    </style>
+
+    <div class="container">
+        <button id="animateButton" class="btn js-confetti">Terminar tarea</button>
+        <img src="unicornio-2.gif" class="unicorn" id="unicorn" alt="Unicornio animado">
+    </div>
+
+    <script>
+        const button = document.getElementById("animateButton");
+        const unicorn = document.getElementById("unicorn");
+        const container = document.querySelector(".container");
+
+        button.addEventListener("click", () => {
+            unicorn.style.display = "block";
+            animateUnicorn();
+        });
+
+        function animateUnicorn() {
+            const duration = 4500;
+            const startTime = performance.now();
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
+            const amplitude = screenHeight * 0.8;
+
+            let trailParticles = [];
+
+            function animate(currentTime) {
+                const elapsedTime = currentTime - startTime;
+                const progress = elapsedTime / duration;
+
+                if (progress <= 1) {
+                    const x = screenWidth * progress;
+                    const y = screenHeight - amplitude * Math.sin(progress * Math.PI);
+
+                    unicorn.style.transform = `translate(${x}px, ${y}px)`;
+
+                    // Crear un nuevo destello de brillo
+                    const sparkle = document.createElement("div");
+                    sparkle.classList.add("sparkle-trail");
+
+                    // Elegir aleatoriamente un tipo de partícula (destello, corazón o estrella)
+                    const types = ["✨", "❤️", "⭐"];
+                    sparkle.textContent = types[Math.floor(Math.random() * types.length)];
+
+                    // Ajuste de tamaño y posición aleatoria
+                    sparkle.style.fontSize = `${Math.random() * 12 + 16}px`;
+                    sparkle.style.left = `${x + Math.random() * 20 - 10}px`;
+                    sparkle.style.top = `${y + unicorn.clientHeight / 2 + Math.random() * 20 - 10}px`;
+
+                    container.appendChild(sparkle);
+                    trailParticles.push(sparkle);
+
+                    if (trailParticles.length > 80) {
+                        const removed = trailParticles.shift();
+                        removed.remove();
+                    }
+
+                    requestAnimationFrame(animate);
+                } else {
+                    unicorn.style.display = "none";
+                    trailParticles.forEach(particle => particle.remove());
+                    trailParticles = [];
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        const sound = document.getElementById("sound");
+        const triggers = document.querySelectorAll(".js-confetti");
+        const defaults = {
+          disableForReducedMotion: true
+        };
+
+        function fire(particleRatio, opts) {
+          confetti(
+            Object.assign({}, defaults, opts, {
+              particleCount: Math.floor(200 * particleRatio)
+            })
+          );
+        }
+
+        function confettiExplosion(origin) {
+          fire(0.25, {
+            spread: 26,
+            startVelocity: 55,
+            origin
+          });
+          fire(0.2, {
+            spread: 60,
+            origin
+          });
+          fire(0.35, {
+            spread: 100,
+            decay: 0.91,
+            origin
+          });
+          fire(0.1, {
+            spread: 120,
+            startVelocity: 25,
+            decay: 0.92,
+            origin
+          });
+          fire(0.1, {
+            spread: 120,
+            startVelocity: 45,
+            origin
+          });
+        }
+
+        Array.from(triggers).forEach((trigger) => {
+          trigger.addEventListener("click", () => {
+            const rect = trigger.getBoundingClientRect();
+            const center = {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2
+            };
+            const origin = {
+              x: center.x / window.innerWidth,
+              y: center.y / window.innerHeight
+            };
+
+            if (sound) {
+              sound.currentTime = 0;
+              sound.play();
+            }
+            confettiExplosion(origin);
+          });
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+</body>
+</html>
